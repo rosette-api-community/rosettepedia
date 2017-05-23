@@ -1,0 +1,12 @@
+appdirs==1.4.3
+certifi==2017.4.17
+html2text==2016.9.19
+lxml==3.7.3
+mwparserfromhell==0.4.4
+packaging==16.8
+pycurl==7.43.0
+pyparsing==2.2.0
+requests==2.14.2
+rosette-api==1.5.0
+six==1.10.0
+wptools==0.2.3
