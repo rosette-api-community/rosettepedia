@@ -6,11 +6,11 @@ Wikipedia."""
 import csv
 import json
 import os
-import re
 import sys
 import urllib
+import warnings
 
-from operator import itemgetter, methodcaller
+from operator import methodcaller
 from getpass import getpass
 from iso639 import Iso639
 from functools import lru_cache
@@ -111,11 +111,10 @@ def dump_content(content, filename):
 
 def warn(message):
     """Show a warning message to the user"""
-    warngins.warn(message, category=RuntimeWarning, stacklevel=2)
+    warnings.warn(message, category=RuntimeWarning, stacklevel=2)
 
 def get_infobox(page):
     """Parse out the first Infobox for the page as a dict."""
-    INFOBOX = re.compile('{+Infobox')
     templates = mwparserfromhell.parse(page.wikitext).filter_templates()
     infobox = {}
     for template in templates:
