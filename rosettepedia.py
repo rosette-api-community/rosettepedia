@@ -34,8 +34,6 @@ If you are missing any of these modules, install them with pip3:
 
 DEFAULT_ROSETTE_API_URL = 'https://api.rosette.com/rest/v1/'
 
-ISO_639_TABLE = 'ISO-639.tsv'
-
 def load_table(filename):
     """Load rows as dicts from TSV file"""
     with open(filename, mode='r') as f:
@@ -46,13 +44,6 @@ def load_table(filename):
 def dump(obj):
     """Dump dict-like object to a file as JSON"""
     print(json.dumps(obj, ensure_ascii=False, indent=2) + '\n', file=sys.stdout)
-
-def language(code, from_='2/T', to='1'):
-    """Look up ISO-639 language codes for different standards"""
-    mapping = {l.get(from_): l.get(to) for l in ISO_639 if l.get(from_)}
-    return mapping.get(code)
-
-ISO_639 = list(load_table(ISO_639_TABLE))
 
 def request(content, endpoint, api, language=None, uri=False, **kwargs):
     """Request Rosette API results for the given content and endpoint.
