@@ -18,7 +18,6 @@ from functools import lru_cache
 EXTERNALS = ('mwparserfromhell', 'rosette_api', 'wptools')
 try:
     import mwparserfromhell
-
     import wptools
     from rosette.api import API, DocumentParameters
 except ImportError:
@@ -33,13 +32,6 @@ If you are missing any of these modules, install them with pip3:
     sys.exit(1)
 
 DEFAULT_ROSETTE_API_URL = 'https://api.rosette.com/rest/v1/'
-
-def load_table(filename):
-    """Load rows as dicts from TSV file"""
-    with open(filename, mode='r') as f:
-        reader = csv.DictReader(f, delimiter='\t')
-        for row in reader:
-            yield row
 
 def dump(obj):
     """Dump dict-like object to a file as JSON"""
@@ -143,9 +135,9 @@ def fetch_wikipedia(qid, lang, normalized):
     # If the lookup fails, just return an empty dict
     return {}
 
-def augment(adm, wikipedia_language, verbose):
-    """Augment the ADM with Wikipedia Infobox/Wikidata for the given language
-    for each entity that was resolved to Wikidata with a QID.
+def augment(results, wikipedia_language, verbose):
+    """Augment the entities with Wikipedia Infobox/Wikidata for the given
+    language for each entity that was resolved to Wikidata with a QID.
     
     That is, for each entity extracted by Rosette API, if the entity's 
     'entityId' attribute is of the form r'^Q\d+', then a new 'wikipedia' 
@@ -153,51 +145,48 @@ def augment(adm, wikipedia_language, verbose):
     
     E.g.,:
     
-    api = API(user_key=<key>, service_url=<api_url>)
-    api.setUrlParameter('output', 'rosette')
-    adm = request(
+    results = request(
         'https://en.wikipedia.org/wiki/Count_von_Count',
         'entities',
-        api,
-        language='eng',
+        API(user_key=<key>, service_url=<api_url>),
         uri=True
     )
-    augment(adm, 'eng')
-    adm['attributes']['entities']['items'][0]['wikipedia'] -> {
-      "infobox": {
-        "name": "Count von Count",
-        "series": "Sesame Street",
-        "image": "200px",
-        "first": "November 27, 1972",
-        "portrayer": "Jerry Nelson (1972–2012)Matt Vogel (2013–present)",
-        "alias": "The CountCount",
-        "species": "Muppet vampire",
-        "gender": "Male"
-      },
-      "wikidata": {
-        "IMDB": "ch0000709",
-        "instance": [
-          "fictional character",
-          "vampire"
-        ]
-      },
-      "title": "Count_von_Count",
-      "url": "https://en.wikipedia.org/wiki/Count_von_Count"
+    augment(results, 'eng', False)
+    results['entities'][13] -> {
+        'count': 2,
+        'entityId': 'Q12345',
+        'mention': 'Count von Count',
+        'normalized': 'Count von Count',
+        'type': 'PERSON',
+        'wikipedia': {
+            'infobox': {
+                'alias': 'The CountCount',
+                'first': 'November 27, 1972',
+                'gender': 'Male',
+                'image': '200px',
+                'name': 'Count von Count',
+                'portrayer': 'Jerry Nelson (1972–2012)Matt Vogel (2013–present)',
+                'series': 'Sesame Street',
+                'species': 'Muppet vampire'
+            },
+            'title': 'Count_von_Count',
+            'url': 'https://en.wikipedia.org/wiki/Count_von_Count',
+            'wikidata': {
+                'IMDB': 'ch0000709',
+                'instance': ['fictional character', 'vampire']
+            }
+        }
     }
     """
     if verbose:
-        entities = adm['attributes']['entities']['items']
+        entities = results['attributes']['entities']['items']
     else:
-        entities = adm['entities']
+        entities = results['entities']
     if not any(e['entityId'].startswith('Q') for e in entities):
         warn('Document has no entities resolved to Wikidata!')
-    # Get the ISO 639-1 two-letter language code
-    # (If user doesn't specify a language, just use the language of the
-    # document content as detected by Rosette API.)
-    if wikipedia_language is None:
-        lang_detection = adm['attributes']['languageDetection']
-        results = lang_detection['detectionResults']
-        wikipedia_language = results[0]['language']
+    # Get the ISO 639-1 two-letter language code used by Wikipedia
+    # (Rosette API uses ISO 639-2/T three-letter language codes so we map them 
+    # to ISO 639-1.)
     lang = Iso639()[wikipedia_language]['639-1']
     # Loop over entities that were resolved to a Wikidata QID and
     # augment them with Wikidata and Infobox information where available
