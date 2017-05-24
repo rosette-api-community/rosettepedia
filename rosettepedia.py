@@ -117,10 +117,14 @@ def get_infobox(page):
     return infobox
 
 @lru_cache(maxsize=None)
-def fetch_wikipedia(qid, lang):
+def fetch_wikipedia(qid, lang, normalized):
     """Look up the Wikipedia page for the given QID and language"""
     print(
-        'fetching "{}" Infobox/Wikidata for entity: {} ...'.format(lang, qid),
+        'fetching "{}" Infobox/Wikidata for entity: {} ({}) ...'.format(
+            lang,
+            qid,
+            normalized
+        ),
         file=sys.stderr
     )
     try:
@@ -139,7 +143,7 @@ def fetch_wikipedia(qid, lang):
     # If the lookup fails, just return an empty dict
     return {}
 
-def augment(adm, wikipedia_language):
+def augment(adm, wikipedia_language, verbose):
     """Augment the ADM with Wikipedia Infobox/Wikidata for the given language
     for each entity that was resolved to Wikidata with a QID.
     
@@ -181,7 +185,10 @@ def augment(adm, wikipedia_language):
       "url": "https://en.wikipedia.org/wiki/Count_von_Count"
     }
     """
-    entities = adm['attributes']['entities']['items']
+    if verbose:
+        entities = adm['attributes']['entities']['items']
+    else:
+        entities = adm['entities']
     if not any(e['entityId'].startswith('Q') for e in entities):
         warn('Document has no entities resolved to Wikidata!')
     # Get the ISO 639-1 two-letter language code
@@ -197,7 +204,8 @@ def augment(adm, wikipedia_language):
     for entity in entities:
         id_ = entity['entityId']
         if id_.startswith('Q'):
-            entity['wikipedia'] = fetch_wikipedia(id_, lang)
+            normalized = entity.get('normalized')
+            entity['wikipedia'] = fetch_wikipedia(id_, lang, normalized)
 
 if __name__ == '__main__':
     import argparse
@@ -239,10 +247,18 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-w', '--wikipedia-language',
-        default=None,
+        required=True,
         help=(
             'A three-letter (ISO 639-2 T) code that determines which Wikipedia '
             'language to use for looking up Infobox information if available'
+        )
+    )
+    parser.add_argument(
+        '-v', '--verbose', '--adm',
+        action='store_true',
+        help=(
+            'Output verbosely (i.e., get the full Annotated Data Model (ADM) '
+            'as JSON)'
         )
     )
     args = parser.parse_args()
@@ -254,7 +270,8 @@ if __name__ == '__main__':
     )
     # Instantiate the Rosette API
     api = API(user_key=key, service_url=args.api_url)
-    api.setUrlParameter('output', 'rosette')
+    if args.verbose:
+        api.setUrlParameter('output', 'rosette')
     content = get_content(args.input, args.content_uri)
     print('Extracting entities via Rosette API ...', file=sys.stderr)
     adm = request(
@@ -265,7 +282,7 @@ if __name__ == '__main__':
         uri=args.content_uri
     )
     print('Done!', file=sys.stderr)
-    print('Augmenting entities via WikiMedia API ...', file=sys.stderr)
-    augment(adm, args.wikipedia_language)
+    print('Augmenting entities via MediaWiki API ...', file=sys.stderr)
+    augment(adm, args.wikipedia_language, args.verbose)
     print('Done!', file=sys.stderr)
     dump(adm)
