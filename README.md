@@ -49,7 +49,7 @@ You can use the script from the commandline as follows:
 	  -u, --content-uri     Specify that the input is a URI (otherwise load text
 	                        from file) (default: False)
 	  -k KEY, --key KEY     Rosette API Key (default:
-	                        cd937b4ddb01054a25a556e9749a7853)
+	                        None)
 	  -a API_URL, --api-url API_URL
 	                        Alternative Rosette API URL (default:
 	                        https://api.rosette.com/rest/v1/)
@@ -77,9 +77,9 @@ The simplest way to use the script is to simply pipe in a string:
 
 We can inspect the results with [`jq`](https://stedolan.github.io/jq/):
 
-	$ jq '.attributes.entities.items[]|[.entityId,.wikipedia]' opec.adm.json 
+	$ jq '.attributes.entities.items[]|[.mentions[].normalized,.wikipedia]' opec.adm.json
 	[
-	  "Q7795",
+	  "OPEC",
 	  {
 	    "infobox": {
 	      "name": "Organization of the Petroleum Exporting Countries",
@@ -111,7 +111,7 @@ We can inspect the results with [`jq`](https://stedolan.github.io/jq/):
 	  }
 	]
 	[
-	  "Q1741",
+	  "Vienna",
 	  {
 	    "infobox": {
 	      "name": "Vienna",
@@ -209,7 +209,7 @@ Another way to use the script is to have Rosette API extract content from a web 
 	Extracting entities via Rosette API ...
 	...
 	Done!
-	$ jq '.attributes.entities.items[]|select(.entityId == "Q29")|[.entityId,.wikipedia]' アメリカスカップ.adm.json
+	$ jq '.attributes.entities.items[]|select(.entityId == "Q29")|[.mentions[].normalized,.wikipedia]' アメリカスカップ.adm.json
 	[
 	  "Q29",
 	  {
@@ -250,9 +250,9 @@ However, since Rosette API resolves entities independent of language, you can ge
 	Extracting entities via Rosette API ...
 	...
 	Done!
-	$ jq '.attributes.entities.items[]|select(.entityId == "Q29")|[.entityId,.wikipedia]' アメリカスカップ.deu.adm.json
+	$ jq '.attributes.entities.items[]|select(.entityId == "Q29")|[.mentions[].normalized,.wikipedia]' アメリカスカップ.deu.adm.json
 	[
-	  "Q29",
+	  "Español",
 	  {
 	    "infobox": {
 	      "NAME-AMTSSPRACHE": "Reino de España",
@@ -316,9 +316,75 @@ However, since Rosette API resolves entities independent of language, you can ge
 
 Given the additional information provided by the `wikipedia` extended attributes, you can filter down to only those entities that satisfy certain properties.  For instance, you can query for only those entities that have geo-coordinates:
 
-	$ jq '.attributes.entities.items[].wikipedia|select(.wikidata|has("coordinates"))' アメリカスカップ.adm.json
-	
+	$ jq '.attributes.entities.items[]|select(.wikipedia.wikidata|has("coordinates"))' アメリカスカップ.adm.json
+	...
+	{
+	  "mentions": [
+	    {
+	      "startOffset": 5227,
+	      "endOffset": 5230,
+	      "source": "kb-linker",
+	      "normalized": "JPN"
+	    }
+	  ],
+	  "headMentionIndex": 0,
+	  "type": "LOCATION",
+	  "entityId": "Q17",
+	  "wikipedia": {
+	    "infobox": {},
+	    "wikidata": {
+	      "coordinates": {
+	        "latitude": 35,
+	        "longitude": 136,
+	        "altitude": null,
+	        "precision": 1,
+	        "globe": "http://www.wikidata.org/entity/Q2"
+	      },
+	      "instance": [
+	        "主権国家",
+	        "国",
+	        "島国",
+	        "国際連合加盟国"
+	      ],
+	      "continent": "アジア",
+	      "category": "Category:日本",
+	      "country": "日本"
+	    },
+	    "title": "日本",
+	    "url": "https://ja.wikipedia.org/wiki/日本"
+	  }
+	}
+
 Or find those entities that have a linked website:
 
-	$ jq '.attributes.entities.items[].wikipedia|select(.wikidata|has("website"))' アメリカスカップ.adm.json
-	
+	$ jq '.attributes.entities.items[]|select(.wikipedia.wikidata|has("website"))' アメリカスカップ.adm.json
+	...
+	{
+	  "mentions": [
+	    {
+	      "startOffset": 4827,
+	      "endOffset": 4830,
+	      "source": "kb-linker",
+	      "normalized": "ACC"
+	    },
+	    {
+	      "startOffset": 5543,
+	      "endOffset": 5546,
+	      "source": "kb-linker",
+	      "normalized": "ACC"
+	    }
+	  ],
+	  "headMentionIndex": 0,
+	  "type": "ORGANIZATION",
+	  "entityId": "Q756355",
+	  "wikipedia": {
+	    "infobox": {},
+	    "wikidata": {
+	      "website": "http://www.theacc.com",
+	      "category": "Category:アトランティック・コースト・カンファレンス",
+	      "instance": null
+	    },
+	    "title": "アトランティック・コースト・カンファレンス",
+	    "url": "https://ja.wikipedia.org/wiki/アトランティック・コースト・カンファレンス"
+	  }
+	}

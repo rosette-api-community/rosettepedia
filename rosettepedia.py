@@ -231,7 +231,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-k', '--key',
         help='Rosette API Key',
-        default=os.environ.get('ROSETTE_USER_KEY')
+        default=None
     )
     parser.add_argument(
         '-a', '--api-url',
@@ -256,7 +256,11 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     # Get the user's Rosette API key
-    key = args.key or getpass(prompt='Enter your Rosette API key: ')
+    key = (
+        os.environ.get('ROSETTE_USER_KEY') or
+        args.key or
+        getpass(prompt='Enter your Rosette API key: ')
+    )
     # Instantiate the Rosette API
     api = API(user_key=key, service_url=args.api_url)
     api.setUrlParameter('output', 'rosette')
