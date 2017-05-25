@@ -64,6 +64,8 @@ You can use the script from the commandline as follows:
 
 **Note**: If you prefer not to enter your Rosette API key every time you run the script you can set up an environment variable `$ROSETTE_USER_KEY`.
 
+**Note**: See the [Rosette API developer documentation](https://developer.rosette.com/features-and-functions#-entity-linking) for languages that support entity linking.  As of writing, the API supports Chinese (`zho`), English (`eng`), Japanese (`jpn`), and Spanish (`spa`).
+
 ### Examples
 The simplest way to use the script is to simply pipe in a string:
 
