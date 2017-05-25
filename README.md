@@ -37,7 +37,7 @@ You can use the script from the commandline as follows:
 
     ./rosettepedia.py -h
     usage: rosettepedia.py [-h] [-i INPUT] [-u] [-k KEY] [-a API_URL]
-                           [-l LANGUAGE] -w WIKIPEDIA_LANGUAGE [-s]
+                           [-l LANGUAGE] -w WIKIPEDIA_LANGUAGE [-v]
 
     Augment Rosette API entity extraction results with information from Wikipedia.
 
@@ -59,9 +59,8 @@ You can use the script from the commandline as follows:
                             A three-letter (ISO 639-2 T) code that determines
                             which Wikipedia language to use for looking up Infobox
                             information if available (default: None)
-      -s, --simple-output   Get simplified results (instead of full ADM results)
-                            (default: False)
-
+      -v, --verbose, --adm  Output verbosely (i.e., get the full Annotated Data
+                            Model (ADM) as JSON) (default: False)
 
 **Note**: If you prefer not to enter your Rosette API key every time you run the script you can set up an environment variable `$ROSETTE_USER_KEY`.
 
