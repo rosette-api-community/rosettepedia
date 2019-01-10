@@ -15,21 +15,9 @@ from getpass import getpass
 from iso639 import Iso639
 from functools import lru_cache
 
-EXTERNALS = ('mwparserfromhell', 'rosette_api', 'wptools')
-try:
-    import mwparserfromhell
-    import wptools
-    from rosette.api import API, DocumentParameters
-except ImportError:
-    message = '''This script depends on the following modules:
-    {}
-If you are missing any of these modules, install them with pip3:
-    $ pip3 install {}'''
-    print(
-        message.format('\n    '.join(EXTERNALS), ' '.join(EXTERNALS)),
-        file=sys.stderr
-    )
-    sys.exit(1)
+from rosette.api import API, DocumentParameters
+import wptools
+import mwparserfromhell
 
 DEFAULT_ROSETTE_API_URL = 'https://api.rosette.com/rest/v1/'
 
@@ -98,7 +86,7 @@ def warn(message):
 
 def get_infobox(page):
     """Parse out the first Infobox for the page as a dict."""
-    templates = mwparserfromhell.parse(page.wikitext).filter_templates()
+    templates = mwparserfromhell.parse(page.data["wikitext"]).filter_templates()
     infobox = {}
     for template in templates:
         if template.name.strip_code().startswith('Infobox'):
@@ -123,9 +111,9 @@ def fetch_wikipedia(qid, lang, normalized):
         page = wptools.page(wikibase=qid, lang=lang, silent=True).get()
         return {
             'infobox': get_infobox(page),
-            'wikidata': page.wikidata,
-            'title': page.title,
-            'url': 'https://{}.wikipedia.org/wiki/{}'.format(lang, page.title)
+            'wikidata': page.data["wikidata"],
+            'title': page.data["title"],
+            'url': 'https://{}.wikipedia.org/wiki/{}'.format(lang, page.data["title"])
         }
     except LookupError:
         print(
